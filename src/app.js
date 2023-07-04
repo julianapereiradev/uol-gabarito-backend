@@ -152,6 +152,36 @@ catch (err) {
 
 })
 
+setInterval(async () => {
+  const tenSeconds = Date.now() - 10000
+
+  try {
+    const inactiveUsers = await db.collection("participants")
+    .find({lastStatus: {$lt: tenSeconds}})
+    .toArray()
+
+    if(inactiveUsers.length > 0) {
+      const messages = inactiveUsers.map(user => {
+        return {
+            from: user.name,
+            to: 'Todos',
+            text: 'sai da sala...',
+            type: 'status',
+            time: dayjs().format('HH:mm:ss')
+        
+        }
+      })
+      await db.collection("messages").insertMany(messages)
+      await db.collection("participants").deleteMany({lastStatus: {$lt: tenSeconds}})
+    }
+ 
+  }
+  catch (err) {
+    console.log(err)
+  }
+  
+}, 15000)
+
 // Ligar a aplicação do servidos para ouvir as requisições:
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
